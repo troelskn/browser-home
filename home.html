@@ -1,0 +1,154 @@
+<html>
+  <head>
+    <title>home</title>
+    <style>
+      html,div {
+      height:100%;
+      }
+      table {
+      height: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      }
+      td {
+      text-align: center;
+      vertical-align: middle;
+      }
+      input { font: 2em serif }
+      p { margin: .5em 0; text-align:left }
+      p label { padding: .25em; margin: 0 0; display: block }
+      p label:hover { background-color: #eee }
+      #selector { visibility: hidden; border:1px solid #ccc; -moz-border-radius: .25em; }
+    </style>
+  </head>
+  <body>
+    <table>
+      <tbody>
+        <tr>
+          <td>
+            <form method="get" action="http://www.google.dk/search" id="form">
+              <p style="color:#ccc">
+                ctrl+{1..n}
+              </p>
+              <p>
+                <input type="text" name="q" id="q" />
+                <input type="submit" value="El Goog!" id="submit" />
+                <input type="button" value="&#x25bc;" id="toggle" />
+              </p>
+            </form>
+            <p id="selector">
+              <label><input type="radio" name="destination" value="http://www.google.dk/search" checked="checked" />El Goog</label>
+              <label><input type="radio" name="destination" value="http://dictionary.reference.com/search" />Dictionary</label>
+              <label><input type="radio" name="destination" value="http://www.google.com/cse?cx=007014159245506037235:elwm1rpkm9w" />Ruby Search</label>
+              <label><input type="radio" name="destination" value="http://reference.sitepoint.com/search" />Sitepoint Reference</label>
+            </p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+  <script>
+    elementStyle = function(_elem) {
+      if (typeof(_elem.currentStyle) != 'undefined') {
+        return _elem.currentStyle;
+      } else {
+        return document.defaultView.getComputedStyle(_elem, null);
+      }
+    };
+    parseUrl = function(href) {
+	    var params = {};
+      var split = href.split('?');
+		  var qs = split[1];
+	    if (typeof(qs) == "undefined" || qs.length == 0) {
+        return {hier: href, query: {}};
+      }
+	    qs = qs.replace(/\+/g, ' ');
+	    var args = qs.split('&');
+	    for (var i = 0; i < args.length; i++) {
+        var pair = args[i].split('=');
+        var name = decodeURIComponent(pair[0]);
+        var value = (pair.length == 2)
+			    ? decodeURIComponent(pair[1])
+			    : name;
+        params[name] = value;
+      }
+      return {hier: split[0], query: params};
+    };
+    each = function(it, fn) {
+      for (key in it) {
+        fn(it[key], key);
+      }
+    };
+    exhaust = function(it) {
+      var arr = [];
+      for (key in it) {
+        arr[key] = it[key];
+      }
+      return arr;
+    };
+    selector = document.getElementById("selector");
+    form = document.getElementById("form");
+    document.getElementById("toggle").onclick = function() {
+      selector.style.visibility = (elementStyle(selector)['visibility'] == 'hidden') ? 'visible' : 'hidden';
+    };
+    getDestination = function() {
+      try {
+        each(
+          selector.getElementsByTagName("input"),
+          function(input) {
+            if (input.checked) {
+              throw input;
+            }
+          });
+      } catch (input) {
+        return {title: input.nextSibling.nodeValue, href: input.value};
+      }
+      return null;
+    };
+    updateForm = function() {
+      dest = getDestination();
+      each(
+        exhaust(form.getElementsByTagName("input")),
+        function(input) {
+          if (input.className == "variable") {
+            input.parentNode.removeChild(input);
+          }
+        });
+      var url = parseUrl(dest.href);
+      form.action = url.hier;
+      each(
+        url.query,
+        function(value, name) {
+          var hidden = document.createElement("input");
+          hidden.type = "hidden";
+          hidden.name = name;
+          hidden.value = value;
+          hidden.className = "variable";
+          form.appendChild(hidden);
+        });
+      document.getElementById("submit").value = dest.title;
+    };
+    onSelect = function() {
+      selector.style.visibility = 'hidden';
+      updateForm();
+    };
+    each(
+      selector.getElementsByTagName("input"),
+      function(input) {
+        input.onchange = onSelect;
+      });
+    updateForm();
+    document.onkeydown = function(e) {
+      if (e.ctrlKey && (e.keyCode >= 49) && (e.keyCode <= 57)) {
+        var idx = e.keyCode - 49;
+        var last = null;
+        var radios = exhaust(selector.getElementsByTagName("input"));
+        if (typeof(radios[idx]) != "undefined") {
+          radios[idx].click();
+        }
+        document.getElementById("q").focus();
+      }
+    };
+    document.getElementById("q").focus();
+  </script>
+</html>
