@@ -16,8 +16,9 @@
       }
       input { font: 2em serif }
       p { margin: .5em 0; text-align:left }
-      p label { padding: .25em; margin: 0 0; display: block }
+      p label { padding: .25em; margin: 0 0; display: block; position: relative; }
       p label:hover { background-color: #eee }
+      p label span { color:#ccc; position: absolute; top: .25em; right: .25em; }
       #selector { visibility: hidden; border:1px solid #ccc; -moz-border-radius: .25em; }
     </style>
   </head>
@@ -37,10 +38,11 @@
               </p>
             </form>
             <p id="selector">
-              <label><input type="radio" name="destination" value="http://www.google.dk/search" checked="checked" />El Goog</label>
-              <label><input type="radio" name="destination" value="http://dictionary.reference.com/search" />Dictionary</label>
-              <label><input type="radio" name="destination" value="http://www.google.com/cse?cx=007014159245506037235:elwm1rpkm9w" />Ruby Search</label>
-              <label><input type="radio" name="destination" value="http://reference.sitepoint.com/search" />Sitepoint Reference</label>
+              <label><input type="radio" name="destination" value="http://www.google.com/search?btnI=foo" />Go!<span>ctrl+0</span></label>
+              <label><input type="radio" name="destination" value="http://www.google.dk/search" checked="checked" />El Goog<span>ctrl+1</span></label>
+              <label><input type="radio" name="destination" value="http://dictionary.reference.com/search" />Dictionary<span>ctrl+2</span></label>
+              <label><input type="radio" name="destination" value="http://www.google.com/cse?cx=007014159245506037235:elwm1rpkm9w" />Ruby Search<span>ctrl+3</span></label>
+              <label><input type="radio" name="destination" value="http://reference.sitepoint.com/search" />Sitepoint Reference<span>ctrl+4</span></label>
             </p>
           </td>
         </tr>
@@ -139,8 +141,8 @@
       });
     updateForm();
     document.onkeydown = function(e) {
-      if (e.ctrlKey && (e.keyCode >= 49) && (e.keyCode <= 57)) {
-        var idx = e.keyCode - 49;
+      if (e.ctrlKey && (e.keyCode >= 48) && (e.keyCode <= 57)) {
+        var idx = e.keyCode - 48;
         var last = null;
         var radios = exhaust(selector.getElementsByTagName("input"));
         if (typeof(radios[idx]) != "undefined") {
