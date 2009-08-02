@@ -41,9 +41,12 @@
               <label><input type="radio" name="destination" value="http://www.google.com/search?btnI=foo" />Go!<span>ctrl+0</span></label>
               <label><input type="radio" name="destination" value="http://www.google.dk/search" checked="checked" />El Goog<span>ctrl+1</span></label>
               <label><input type="radio" name="destination" value="http://dictionary.reference.com/search" />Dictionary<span>ctrl+2</span></label>
-              <label><input type="radio" name="destination" value="http://www.google.com/cse?cx=007014159245506037235:elwm1rpkm9w" />Ruby Search<span>ctrl+3</span></label>
-              <label><input type="radio" name="destination" value="http://reference.sitepoint.com/search" />Sitepoint Reference<span>ctrl+4</span></label>
-              <label><input type="radio" name="destination" value="http://www.imdb.com/find?s=all" />Imdb<span>ctrl+5</span></label>
+              <label><input type="radio" name="destination" value="http://www.google.com/cse?cx=007014159245506037235:elwm1rpkm9w" />Ruby Reference<span>ctrl+3</span></label>
+              <label><input type="radio" name="destination" value="http://www.php.net/manual-lookup.php?lang=en|pattern" />PHP Reference<span>ctrl+4</span></label>
+              <label><input type="radio" name="destination" value="http://reference.sitepoint.com/search" />CSS/HTML Reference<span>ctrl+5</span></label>
+              <label><input type="radio" name="destination" value="http://www.google.com/search?q=site%3Ahttp%3A%2F%2Fdocs.plt-scheme.org" />PLT-Scheme Reference<span>ctrl+6</span></label>
+              <label><input type="radio" name="destination" value="http://www.imdb.com/find?s=all" />Imdb<span>ctrl+7</span></label>
+              <label><input type="radio" name="destination" value="http://thepiratebay.org/s/?video=on&page=0&orderby=7" />The Piratebay<span>ctrl+8</span></label>
             </p>
           </td>
         </tr>
@@ -59,23 +62,31 @@
       }
     };
     parseUrl = function(href) {
-	    var params = {};
-      var split = href.split('?');
-		  var qs = split[1];
-	    if (typeof(qs) == "undefined" || qs.length == 0) {
-        return {hier: href, query: {}};
+      var params = {};
+      var url_split = href.split('|');
+      var qname;
+      if (typeof(url_split[1]) == "undefined" || url_split[1].length == 0) {
+        qname = "q";
+      } else {
+        qname = url_split[1];
       }
-	    qs = qs.replace(/\+/g, ' ');
-	    var args = qs.split('&');
-	    for (var i = 0; i < args.length; i++) {
+      href = url_split[0];
+      var split = href.split('?');
+      var qs = split[1];
+      if (typeof(qs) == "undefined" || qs.length == 0) {
+        return {'hier': href, 'query': {}, 'qname': qname};
+      }
+      qs = qs.replace(/\+/g, ' ');
+      var args = qs.split('&');
+      for (var i = 0; i < args.length; i++) {
         var pair = args[i].split('=');
         var name = decodeURIComponent(pair[0]);
         var value = (pair.length == 2)
-			    ? decodeURIComponent(pair[1])
-			    : name;
+            ? decodeURIComponent(pair[1])
+            : name;
         params[name] = value;
       }
-      return {hier: split[0], query: params};
+      return {hier: split[0], query: params, 'qname': qname};
     };
     each = function(it, fn) {
       for (key in it) {
@@ -94,6 +105,13 @@
     document.getElementById("toggle").onclick = function() {
       selector.style.visibility = (elementStyle(selector)['visibility'] == 'hidden') ? 'visible' : 'hidden';
     };
+    var q_more = "";
+    form.onsubmit = function() {
+      if (q_more) {
+        var q = document.getElementById("q");
+        q.value = q_more + " " + q.value;
+      }
+    };
     getDestination = function() {
       try {
         each(
@@ -109,7 +127,7 @@
       return null;
     };
     updateForm = function() {
-      dest = getDestination();
+      var dest = getDestination();
       each(
         exhaust(form.getElementsByTagName("input")),
         function(input) {
@@ -119,17 +137,23 @@
         });
       var url = parseUrl(dest.href);
       form.action = url.hier;
+      q_more = "";
       each(
         url.query,
         function(value, name) {
-          var hidden = document.createElement("input");
-          hidden.type = "hidden";
-          hidden.name = name;
-          hidden.value = value;
-          hidden.className = "variable";
-          form.appendChild(hidden);
+          if (name == "q") {
+            q_more = value;
+          } else {
+            var hidden = document.createElement("input");
+            hidden.type = "hidden";
+            hidden.name = name;
+            hidden.value = value;
+            hidden.className = "variable";
+            form.appendChild(hidden);
+          }
         });
       document.getElementById("submit").value = dest.title;
+      document.getElementById("q").setAttribute("name", url.qname);
     };
     onSelect = function() {
       selector.style.visibility = 'hidden';
